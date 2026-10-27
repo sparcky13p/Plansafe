@@ -1,0 +1,8 @@
+# Runtime deps for the Vercel Python function. Keep the bundle < 250 MB:
+# no matplotlib / opencv.
+fastapi>=0.115
+ezdxf>=1.4
+shapely>=2.0
+numpy>=2.0
+pyyaml>=6.0
+python-multipart>=0.0.9
