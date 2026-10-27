@@ -10,7 +10,7 @@ PlanSafe reads a building's drawings and tells a construction contractor exactly
 
 A large share of construction site accidents in India are falls: from open slab edges, unguarded balconies, lift shafts, stair openings and holes left in floors. In many of these cases the protection was never there in the first place. Nobody planned guardrails for the slab edge, nobody counted how many hole covers the floor openings needed, and nobody bought enough harnesses for the people working at height.
 
-Large builders have safety departments that do this planning. Small and mid-sized contractors usually don't. Working out a safety equipment list by hand means:
+Large builders often have safety departments that do this planning, but even there it is slow, manual and done differently on every project. Small and mid-sized contractors usually have no one to do it at all. Working out a safety equipment list by hand means:
 
 - going through the drawings to find every edge and opening,
 - measuring perimeters and opening sizes,
@@ -75,9 +75,15 @@ A contractor instruction can never quietly reduce protection below what a rule r
 
 ## Who it's for
 
-- **Small and mid-sized contractors** who need a correct safety equipment list and purchase order without a dedicated safety team.
-- **Safety officers and consultants** who want a fast, auditable first draft to check, instead of starting from scratch.
+PlanSafe works for anyone who plans or runs construction work from drawings, whatever the size of the organisation:
+
+- **Contractors and subcontractors**, from small firms without a safety team to large construction companies running many sites.
+- **Developers, builders and project management agencies** who want safety equipment planned and budgeted before work starts.
+- **Safety officers, consultants and auditors** who want a fast, auditable first draft to check, instead of starting from scratch.
+- **Government and public-works agencies** who want consistent, rule-based safety planning across projects and contractors.
 - **Safety equipment suppliers** who want to offer contractors a project-specific kit instead of a generic catalogue.
+
+Smaller contractors without a safety department gain the most. Larger organisations gain speed and a consistent, auditable record for every project.
 
 ## Status
 
