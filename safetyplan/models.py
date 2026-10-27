@@ -91,6 +91,29 @@ class Edge:
     p1: Point
     p2: Point
     length: float
+    facing: str = ""  # north/east/south/west by outward normal, plan north = +y
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+HazardType = Literal["stair", "lift_shaft", "duct_shaft", "floor_opening", "balcony", "other"]
+HAZARD_TYPES: tuple[str, ...] = HazardType.__args__  # type: ignore[attr-defined]
+
+
+@dataclass
+class Detection:
+    """Final label for one candidate after merging heuristics and Muse Spark."""
+
+    candidate_id: str
+    type: HazardType
+    confidence: float
+    source: Literal["heuristic", "muse", "both", "none"]
+    needs_review: bool
+    heuristic_type: HazardType | None = None
+    muse_type: HazardType | None = None
+    evidence: list[str] = field(default_factory=list)
+    reason: str = ""
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -107,6 +130,18 @@ class PlanGeometry:
 
     def candidate(self, cid: str) -> Candidate:
         return next(c for c in self.candidates if c.id == cid)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "PlanGeometry":
+        return cls(
+            outline=[tuple(p) for p in d["outline"]],
+            outline_area=d["outline_area"],
+            outline_perimeter=d["outline_perimeter"],
+            edges=[Edge(**{**e, "p1": tuple(e["p1"]), "p2": tuple(e["p2"])}) for e in d["edges"]],
+            candidates=[Candidate(**{**c, "polygon": [tuple(p) for p in c["polygon"]],
+                                     "bbox": tuple(c["bbox"])}) for c in d["candidates"]],
+            warnings=list(d.get("warnings", [])),
+        )
 
     def to_dict(self) -> dict:
         return {

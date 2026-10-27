@@ -1,0 +1,133 @@
+# Generic items: the vocabulary shared by rule packs (what is needed) and
+# supplier SKUs (what can be bought). A SKU maps to exactly one generic item
+# (or a kit of several) and must meet every standard in `min_spec`.
+#
+# unit:      pcs | m | m2 | set
+# reusable:  moves floor to floor as work progresses (vs. consumed / issued)
+
+items:
+  # --- Edge & opening protection -------------------------------------------
+  guardrail_top_rail_m:
+    name: Guardrail top rail
+    unit: m
+    category: Edge protection
+    reusable: true
+    min_spec: []
+    note: Top edge 0.99-1.14 m (39-45 in) above the walking surface; withstands 890 N (200 lb).
+  guardrail_mid_rail_m:
+    name: Guardrail mid rail
+    unit: m
+    category: Edge protection
+    reusable: true
+    min_spec: []
+  toe_board_m:
+    name: Toe board
+    unit: m
+    category: Edge protection
+    reusable: true
+    min_spec: []
+    note: At least 90 mm (3.5 in) high.
+  guardrail_post:
+    name: Guardrail post / stanchion with slab clamp
+    unit: pcs
+    category: Edge protection
+    reusable: true
+    min_spec: []
+  stair_handrail_m:
+    name: Temporary stair handrail
+    unit: m
+    category: Edge protection
+    reusable: true
+    min_spec: []
+  lift_landing_barrier:
+    name: Lift-shaft landing barrier / gate
+    unit: pcs
+    category: Edge protection
+    reusable: false
+    min_spec: []
+  hole_cover_1m:
+    name: Hole cover plate up to 1.0 x 1.0 m, marked "HOLE"
+    unit: pcs
+    category: Opening covers
+    reusable: false
+    min_spec: []
+    note: Must carry twice the expected load and be secured against displacement.
+  hole_cover_1_5m:
+    name: Hole cover plate up to 1.5 x 1.5 m, marked "HOLE"
+    unit: pcs
+    category: Opening covers
+    reusable: false
+    min_spec: []
+    note: Must carry twice the expected load and be secured against displacement.
+  safety_net_m2:
+    name: Perimeter safety net
+    unit: m2
+    category: Edge protection
+    reusable: true
+    min_spec: [IS 11057]
+
+  # --- Fall arrest ------------------------------------------------------------
+  full_body_harness:
+    name: Full body harness
+    unit: pcs
+    category: Fall arrest
+    reusable: true
+    min_spec: [IS 3521]
+  lanyard_double:
+    name: Twin-leg lanyard with shock absorber
+    unit: pcs
+    category: Fall arrest
+    reusable: true
+    min_spec: [IS 3521]
+  lifeline_m:
+    name: Horizontal lifeline (wire rope)
+    unit: m
+    category: Fall arrest
+    reusable: true
+    min_spec: []
+  anchor_point:
+    name: Anchor point / lifeline stanchion
+    unit: pcs
+    category: Fall arrest
+    reusable: true
+    min_spec: []
+
+  # --- PPE ----------------------------------------------------------------------
+  helmet:
+    name: Safety helmet
+    unit: pcs
+    category: PPE
+    reusable: true
+    min_spec: [IS 2925]
+  safety_shoes:
+    name: Safety shoes (pair)
+    unit: pcs
+    category: PPE
+    reusable: true
+    min_spec: [IS 15298]
+  reflective_vest:
+    name: High-visibility vest
+    unit: pcs
+    category: PPE
+    reusable: true
+    min_spec: []
+  gloves_pair:
+    name: Work gloves (pair)
+    unit: pcs
+    category: PPE
+    reusable: false
+    min_spec: []
+
+  # --- Site -------------------------------------------------------------------
+  danger_sign:
+    name: Warning sign ("DANGER - OPEN EDGE / OPENING")
+    unit: pcs
+    category: Signage & first aid
+    reusable: true
+    min_spec: []
+  first_aid_box:
+    name: First-aid box
+    unit: pcs
+    category: Signage & first aid
+    reusable: true
+    min_spec: []

@@ -1,0 +1,109 @@
+# One case per rule (or rule boundary). `expect` lists only the items the case
+# is about; `absent` items must not appear at all.
+# Feature shorthand: {id, type, length, perimeter, area, min_dim, max_dim}
+
+defaults:
+  inputs: {floors: 4, floor_height: 3.0, workforce: 0, workers_at_height: 0, floors_concurrent: 2}
+
+cases:
+  - name: OSHA edge guardrail, posts per 2.4 m + 1, x active floors
+    packs: [osha_1926]
+    features: [{id: E1, type: slab_edge, length: 10.0}]
+    expect: {guardrail_top_rail_m: 20, guardrail_mid_rail_m: 20, toe_board_m: 20, guardrail_post: 12}
+
+  - name: No edge protection when floor height is below 1.8 m
+    packs: [osha_1926, is_bocw]
+    inputs: {floor_height: 1.5}
+    features: [{id: E1, type: slab_edge, length: 10.0}]
+    absent: [guardrail_top_rail_m, guardrail_post]
+
+  - name: Balcony edges are guarded like slab edges
+    packs: [osha_1926]
+    features: [{id: C1, type: balcony, length: 6.4, perimeter: 10.4, min_dim: 1.2, max_dim: 4.0}]
+    expect: {guardrail_top_rail_m: 13, guardrail_post: 8}
+
+  - name: Small hole (0.6 m) gets a 1 m cover on every floor
+    packs: [osha_1926]
+    features: [{id: C2, type: duct_shaft, perimeter: 2.4, min_dim: 0.6, max_dim: 0.6}]
+    expect: {hole_cover_1m: 4}
+    absent: [hole_cover_1_5m, guardrail_top_rail_m]
+
+  - name: Cover boundary - 0.7 m hole + 0.3 m bearing = exactly 1.0 m
+    packs: [osha_1926]
+    features: [{id: C2, type: duct_shaft, perimeter: 2.8, min_dim: 0.7, max_dim: 0.7}]
+    expect: {hole_cover_1m: 4}
+    absent: [hole_cover_1_5m]
+
+  - name: Medium hole (1.0 m) gets a 1.5 m cover
+    packs: [osha_1926]
+    features: [{id: C5, type: floor_opening, perimeter: 4.0, min_dim: 1.0, max_dim: 1.0}]
+    expect: {hole_cover_1_5m: 4}
+    absent: [hole_cover_1m]
+
+  - name: Opening too large to cover is guarded on all sides
+    packs: [osha_1926]
+    features: [{id: C6, type: floor_opening, perimeter: 8.0, min_dim: 2.0, max_dim: 2.0}]
+    expect: {guardrail_top_rail_m: 16, guardrail_post: 10}
+    absent: [hole_cover_1m, hole_cover_1_5m]
+
+  - name: Lift shaft - perimeter guardrail on active floors + barrier per landing
+    packs: [osha_1926]
+    features: [{id: C4, type: lift_shaft, perimeter: 10.0, min_dim: 2.5, max_dim: 2.5}]
+    expect: {guardrail_top_rail_m: 20, guardrail_post: 12, lift_landing_barrier: 4}
+
+  - name: Stair - open sides guarded (access side left open) + 2 flights of handrail per floor
+    packs: [osha_1926]
+    features: [{id: C3, type: stair, perimeter: 15.4, min_dim: 2.7, max_dim: 5.0}]
+    expect: {guardrail_top_rail_m: 26, guardrail_post: 14, stair_handrail_m: 40}
+
+  - name: Harness + lanyard for workers at height with spare
+    packs: [osha_1926]
+    inputs: {workers_at_height: 16, spare: 0.1}
+    features: []
+    expect: {full_body_harness: 18, lanyard_double: 18}
+
+  - name: Helmets for whole workforce with spare
+    packs: [osha_1926]
+    inputs: {workforce: 40, spare: 0.1}
+    features: []
+    expect: {helmet: 44}
+
+  - name: BOCW first aid 1 per 50 workers
+    packs: [is_bocw]
+    inputs: {workforce: 51}
+    features: []
+    expect: {first_aid_box: 2}
+
+  - name: BOCW safety net only above 6 m total height
+    packs: [is_bocw]
+    inputs: {floors: 1, floor_height: 3.0}
+    features: [{id: E1, type: slab_edge, length: 10.0}]
+    absent: [safety_net_m2]
+
+  - name: BOCW safety net 2.5 m wide along exposed perimeter
+    packs: [is_bocw]
+    features: [{id: E1, type: slab_edge, length: 10.0}, {id: E2, type: slab_edge, length: 6.0}]
+    expect: {safety_net_m2: 40}
+
+  - name: Stricter wins - same guardrail required by two packs is not doubled
+    packs: [osha_1926, is_bocw]
+    features: [{id: E1, type: slab_edge, length: 10.0}]
+    expect: {guardrail_top_rail_m: 20, guardrail_post: 12}
+
+  - name: Lifeline and anchors along exposed perimeter
+    packs: [site_practice]
+    features: [{id: E1, type: slab_edge, length: 25.0}]
+    expect: {lifeline_m: 25, anchor_point: 4}
+
+  - name: Signs per 10 m of edge + per opening, per active floor
+    packs: [site_practice]
+    features:
+      - {id: E1, type: slab_edge, length: 25.0}
+      - {id: C2, type: duct_shaft, perimeter: 2.4, min_dim: 0.6, max_dim: 0.6}
+    expect: {danger_sign: 8}
+
+  - name: Shoes, vests, gloves for everyone
+    packs: [site_practice]
+    inputs: {workforce: 20, spare: 0.1}
+    features: []
+    expect: {safety_shoes: 22, reflective_vest: 22, gloves_pair: 22}

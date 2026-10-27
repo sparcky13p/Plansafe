@@ -96,6 +96,65 @@ def build_all(out_dir: Path) -> dict[str, Path]:
     return {name: fn(out_dir / name) for name, fn in ALL.items()}
 
 
+
+def tower_pdf(path: Path) -> Path:
+    """A vector PDF at 1:100 on A3: 20 x 15 m slab, 2.5 m lift with X, 1 m cut-out.
+
+    1:100 -> 1 m = 10 mm on paper = 28.3465 pt. Expected perimeter 70 m.
+    """
+    import pymupdf
+
+    k = 72 / 25.4 * 10  # pt per metre at 1:100
+    doc = pymupdf.open()
+    page = doc.new_page(width=1191, height=842)
+    ox, oy = 100, 700  # origin (PDF y grows downward)
+
+    def P(x, y):
+        return pymupdf.Point(ox + x * k, oy - y * k)
+
+    def rect(x0, y0, x1, y1):
+        page.draw_rect(pymupdf.Rect(P(x0, y1), P(x1, y0)), color=(0, 0, 0), width=0.5)
+
+    rect(0, 0, 20, 15)
+    rect(3, 10, 5.5, 12.5)
+    page.draw_line(P(3, 10), P(5.5, 12.5), color=(0, 0, 0), width=0.3)
+    page.draw_line(P(3, 12.5), P(5.5, 10), color=(0, 0, 0), width=0.3)
+    rect(16, 12, 17, 13)
+    page.insert_text(P(3.6, 11.0), "LIFT", fontsize=8)
+    page.insert_text(P(16.1, 12.4), "CUT OUT", fontsize=5)
+    page.insert_text(pymupdf.Point(900, 800), "GROUND FLOOR PLAN  SCALE 1:100", fontsize=10)
+    doc.save(path)
+    return path
+
+
+ALL["tower_pdf.pdf"] = tower_pdf
+
+
+def lines_only(path: Path) -> Path:
+    """Everything drawn with loose LINEs, no labels, metres.
+
+    Slab 16 x 12 m; lift 2.4 x 2.4 m with an X-cross; stair 2.6 x 4.5 m with
+    tread lines every 0.3 m. Both must come out as single candidates.
+    """
+    doc = ezdxf.new("R2018")
+    doc.header["$INSUNITS"] = 6
+    msp = doc.modelspace()
+    _rect_lines(msp, 0, 0, 16, 12)
+    _rect_lines(msp, 2, 8, 4.4, 10.4)
+    msp.add_line((2, 8), (4.4, 10.4))
+    msp.add_line((2, 10.4), (4.4, 8))
+    _rect_lines(msp, 8, 6, 10.6, 10.5)
+    y = 6.3
+    while y < 10.5 - 1e-9:
+        msp.add_line((8, y), (10.6, y))
+        y += 0.3
+    doc.saveas(path)
+    return path
+
+
+ALL["lines_only.dxf"] = lines_only
+
+
 if __name__ == "__main__":
     for name, p in build_all(Path(__file__).parent / "out").items():
         print(p)

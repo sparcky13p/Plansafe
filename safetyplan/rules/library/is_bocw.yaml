@@ -1,0 +1,84 @@
+# Indian rules: Building and Other Construction Workers (RE&CS) Central Rules, 1998
+# and the relevant Indian Standards.
+#
+# verified: false  ->  clause references and values still need to be checked
+# against the source documents by a competent safety professional. The UI
+# shows these rules with an "unverified" badge.
+
+pack: is_bocw
+title: BOCW Central Rules 1998 + Indian Standards
+version: 1
+rules:
+  - id: BOCW-EDGE-GUARDRAIL
+    title: Guardrail and toe board along open slab edges
+    group: edge_guardrail
+    applies_to: [slab_edge, balcony]
+    when: floor_height >= 1.8
+    citation: BOCW Central Rules 1998 (guard-rails, toe-boards); IS 4912 (floor & wall openings, railings, toe boards)
+    summary: Open edges of floors from which a worker could fall need a guard rail, intermediate rail and toe board.
+    produces:
+      - {item: guardrail_top_rail_m, qty: length * active_floors}
+      - {item: guardrail_mid_rail_m, qty: length * active_floors}
+      - {item: toe_board_m, qty: length * active_floors}
+      - {item: guardrail_post, qty: (ceil(length / post_spacing) + 1) * active_floors}
+    verified: false
+
+  - id: BOCW-OPENING-COVER
+    title: Cover or guard floor openings
+    group: hole_cover
+    applies_to: [duct_shaft, floor_opening]
+    when: max_dim + 0.3 <= max_cover_span
+    citation: BOCW Central Rules 1998 (openings in floors); IS 4912
+    summary: Floor openings are securely covered or guarded; covers are fixed in place and marked.
+    produces:
+      - {item: hole_cover_1m, qty: floors if max_dim + 0.3 <= 1.0 else 0}
+      - {item: hole_cover_1_5m, qty: floors if max_dim + 0.3 > 1.0 else 0}
+    verified: false
+
+  - id: BOCW-SAFETY-NET
+    title: Perimeter safety net
+    group: safety_net
+    applies_to: [project]
+    when: top_height >= 6 and exposed_edge_length > 0
+    citation: BOCW Central Rules 1998 (safety nets); IS 11057 (industrial safety nets)
+    summary: >-
+      A catch net below the working floor along the open perimeter, projecting about 2.5 m
+      outward (OSHA 1926.502(c)(2) uses 8 ft for a net within 5 ft of the work surface).
+      Moved up as work progresses, so one level is counted.
+    produces:
+      - {item: safety_net_m2, qty: exposed_edge_length * 2.5}
+    verified: false
+
+  - id: BOCW-HELMET
+    title: Safety helmets
+    group: helmet
+    applies_to: [project]
+    when: workforce > 0
+    citation: BOCW Central Rules 1998 (personal protective equipment); IS 2925
+    summary: Every worker on site is provided with a safety helmet conforming to IS 2925.
+    produces:
+      - {item: helmet, qty: ceil(workforce * (1 + spare))}
+    verified: false
+
+  - id: BOCW-HARNESS
+    title: Safety harness for work at height
+    group: pfas
+    applies_to: [project]
+    when: workers_at_height > 0
+    citation: BOCW Central Rules 1998 (work at height); IS 3521 (full body harness)
+    summary: Workers at height without other protection use a full body harness conforming to IS 3521.
+    produces:
+      - {item: full_body_harness, qty: ceil(workers_at_height * (1 + spare))}
+      - {item: lanyard_double, qty: ceil(workers_at_height * (1 + spare))}
+    verified: false
+
+  - id: BOCW-FIRST-AID
+    title: First-aid boxes
+    group: first_aid
+    applies_to: [project]
+    when: workforce > 0
+    citation: BOCW Central Rules 1998 (first-aid boxes)
+    summary: First-aid boxes on site in proportion to the workforce (counted here as 1 per 50 workers).
+    produces:
+      - {item: first_aid_box, qty: ceil(workforce / 50)}
+    verified: false

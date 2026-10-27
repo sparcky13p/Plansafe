@@ -1,0 +1,9 @@
+{
+  "name": "plansafe",
+  "private": true,
+  "type": "module",
+  "description": "Root package: dependencies for the Node API functions in api/*.js",
+  "dependencies": {
+    "@vercel/blob": "0.27.0"
+  }
+}

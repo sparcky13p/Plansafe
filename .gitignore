@@ -3,8 +3,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 tests/fixtures/out/
-web/node_modules/
+node_modules/
 web/dist/
 .vercel/
 .env*
+!.env.example
 *.tsbuildinfo
+.data/

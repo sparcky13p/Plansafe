@@ -38,7 +38,7 @@ def build_geometry(plan: RawPlan) -> PlanGeometry:
         if _snap(s.x1, s.y1) != _snap(s.x2, s.y2)
     ]
     faces = [orient(p) for p in polygonize(unary_union(MultiLineString(lines)))] if lines else []
-    faces = [f for f in faces if f.area >= MIN_AREA_M2]
+    faces = _merge_detail_faces([f for f in faces if f.area >= MIN_AREA_M2])
     shapes = []
     for cs in plan.closed_shapes:
         p = Polygon([_snap(x, y) for x, y in cs.points])
@@ -54,7 +54,7 @@ def build_geometry(plan: RawPlan) -> PlanGeometry:
 
     footprint = unary_union(regions)
     main = max(_polys(footprint), key=lambda p: p.area)
-    outline = orient(Polygon(main.exterior).simplify(SIMPLIFY_M))
+    outline = _canonical(orient(Polygon(main.exterior).simplify(SIMPLIFY_M)))
     if len(_polys(footprint)) > 1:
         warnings.append("Plan has several disconnected regions; using the largest as the slab.")
 
@@ -86,7 +86,7 @@ def build_geometry(plan: RawPlan) -> PlanGeometry:
 
     coords = list(outline.exterior.coords)
     edges = [
-        Edge(f"E{i}", _r(a), _r(b), round(math.dist(a, b), 3))
+        Edge(f"E{i}", _r(a), _r(b), round(math.dist(a, b), 3), _facing(a, b))
         for i, (a, b) in enumerate(zip(coords, coords[1:]), 1)
     ]
 
@@ -98,6 +98,63 @@ def build_geometry(plan: RawPlan) -> PlanGeometry:
         candidates=candidates,
         warnings=warnings,
     )
+
+
+def _merge_detail_faces(faces: list[Polygon]) -> list[Polygon]:
+    """Re-join regions that drawing detail split apart when drawn with loose lines.
+
+    - X-cross shafts: 4+ triangles sharing an interior vertex whose union is convex.
+    - Stair treads: 3+ adjacent thin parallel strips sharing their long sides.
+    """
+    used: set[int] = set()
+    merged: list[Polygon] = []
+
+    tri = [i for i, f in enumerate(faces) if len(f.exterior.coords) == 4]
+    by_vertex: dict[tuple, list[int]] = {}
+    for i in tri:
+        for v in faces[i].exterior.coords[:-1]:
+            by_vertex.setdefault(tuple(v), []).append(i)
+    for v, idx in by_vertex.items():
+        idx = [i for i in idx if i not in used]
+        if len(idx) < 4:
+            continue
+        u = unary_union([faces[i] for i in idx])
+        if u.geom_type == "Polygon" and u.area / u.convex_hull.area >= 0.98 and not u.exterior.distance(Point(v)) < SNAP_M:
+            merged.append(orient(Polygon(u.exterior)))
+            used.update(idx)
+
+    def dims(f):
+        c = list(f.minimum_rotated_rectangle.exterior.coords)
+        return sorted([math.dist(c[0], c[1]), math.dist(c[1], c[2])])
+
+    strips = [i for i, f in enumerate(faces) if i not in used and (d := dims(f))[0] <= 0.45 and d[1] >= 3 * d[0]]
+    adj: dict[int, set[int]] = {i: set() for i in strips}
+    for a_ in strips:
+        for b_ in strips:
+            if a_ < b_:
+                shared = faces[a_].intersection(faces[b_])
+                if shared.length >= 0.8 * min(dims(faces[a_])[1], dims(faces[b_])[1]):
+                    adj[a_].add(b_)
+                    adj[b_].add(a_)
+    seen: set[int] = set()
+    for s0 in strips:
+        if s0 in seen:
+            continue
+        comp, stack = [], [s0]
+        while stack:
+            i = stack.pop()
+            if i in seen:
+                continue
+            seen.add(i)
+            comp.append(i)
+            stack.extend(adj[i] - seen)
+        if len(comp) >= 3:
+            u = unary_union([faces[i] for i in comp])
+            if u.geom_type == "Polygon":
+                merged.append(orient(Polygon(u.exterior).simplify(SIMPLIFY_M)))
+                used.update(comp)
+
+    return [f for i, f in enumerate(faces) if i not in used] + merged
 
 
 def _select_candidates(raw, outline: Polygon):
@@ -184,6 +241,25 @@ def _boundary_layers(face: Polygon, tree, seg_layers) -> list[str]:
     ring = face.exterior.buffer(SNAP_M * 2)
     hits = tree.query(ring, predicate="contains")
     return sorted({seg_layers[i] for i in hits})
+
+
+def _canonical(p: Polygon) -> Polygon:
+    """Start the CCW ring at its bottom-left vertex so edge ids (E1 = first edge
+    going anticlockwise from there) do not depend on processing order."""
+    ring = list(p.exterior.coords)[:-1]
+    i0 = min(range(len(ring)), key=lambda i: (ring[i][0], ring[i][1]))
+    return Polygon(ring[i0:] + ring[:i0])
+
+
+def _facing(a, b) -> str:
+    """Compass direction of the outward normal of a CCW outline edge a->b."""
+    nx, ny = b[1] - a[1], -(b[0] - a[0])
+    ang = math.degrees(math.atan2(ny, nx))
+    if 45 < ang <= 135:
+        return "north"
+    if -135 < ang <= -45:
+        return "south"
+    return "east" if -45 < ang <= 45 else "west"
 
 
 def _opening(poly: Polygon, r: float):

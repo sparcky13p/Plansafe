@@ -1,81 +1,72 @@
-import { useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { api } from "./api";
+import { UserMenu } from "./auth";
+import { ProjectPage } from "./pages/ProjectPage";
+import { Projects } from "./pages/Projects";
+import { Suppliers } from "./pages/Suppliers";
+import type { GenericItem, Me } from "./types";
 
-type Candidate = {
-  id: string;
-  source: string;
-  polygon: [number, number][];
-  area: number;
-  min_dim: number;
-  max_dim: number;
-  texts: string[];
-  blocks: string[];
-  layers: string[];
-};
+interface AppData {
+  me: Me | null;
+  items: Record<string, GenericItem>;
+}
 
-type Geometry = {
-  outline: [number, number][];
-  outline_area: number;
-  outline_perimeter: number;
-  candidates: Candidate[];
-  warnings: string[];
-};
+const Ctx = createContext<AppData>({ me: null, items: {} });
+export const useAppData = () => useContext(Ctx);
 
-// Run 1 shell: upload a DXF and see the extracted outline + candidates.
-// The full review UI arrives in run 6.
+function useHashRoute() {
+  const [hash, setHash] = useState(location.hash || "#/");
+  useEffect(() => {
+    const on = () => setHash(location.hash || "#/");
+    addEventListener("hashchange", on);
+    return () => removeEventListener("hashchange", on);
+  }, []);
+  return hash.slice(1);
+}
+
+export function navigate(path: string) {
+  location.hash = path;
+}
+
 export function App() {
-  const [geom, setGeom] = useState<Geometry | null>(null);
+  const route = useHashRoute();
+  const [data, setData] = useState<AppData>({ me: null, items: {} });
   const [error, setError] = useState<string | null>(null);
 
-  async function upload(file: File) {
-    setError(null);
-    const body = new FormData();
-    body.append("file", file);
-    const r = await fetch("/api/geometry", { method: "POST", body });
-    if (!r.ok) {
-      setError((await r.json()).detail ?? r.statusText);
-      return;
-    }
-    setGeom(await r.json());
-  }
+  useEffect(() => {
+    Promise.all([api<Me>("/api/me"), api<{ items: Record<string, GenericItem> }>("/api/catalog/items")])
+      .then(([me, cat]) => setData({ me, items: cat.items }))
+      .catch((e) => setError(String(e.message ?? e)));
+  }, []);
+
+  const projectMatch = route.match(/^\/p\/([0-9a-f]+)/);
+  let page;
+  if (projectMatch) page = <ProjectPage id={projectMatch[1]} />;
+  else if (route.startsWith("/suppliers")) page = <Suppliers />;
+  else page = <Projects />;
 
   return (
-    <main style={{ fontFamily: "system-ui", maxWidth: 960, margin: "0 auto", padding: 16 }}>
-      <h1>SafetyPlan</h1>
-      <input type="file" accept=".dxf" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
-      {geom && (
-        <>
-          <p>
-            Slab {geom.outline_area.toFixed(1)} m², perimeter {geom.outline_perimeter.toFixed(2)} m,{" "}
-            {geom.candidates.length} candidates
-          </p>
-          <PlanSvg geom={geom} />
-        </>
-      )}
-    </main>
+    <Ctx.Provider value={data}>
+      <header className="topbar">
+        <a className="brand" href="#/">
+          <span className="logo" aria-hidden>▲</span> PlanSafe
+        </a>
+        <nav>
+          <a href="#/" className={!projectMatch && !route.startsWith("/suppliers") ? "active" : ""}>Projects</a>
+          <a href="#/suppliers" className={route.startsWith("/suppliers") ? "active" : ""}>Suppliers</a>
+        </nav>
+        <UserMenu />
+      </header>
+      {data.me && <ServiceNotice me={data.me} />}
+      <main className="container">{error ? <div className="alert error">Could not reach the API: {error}</div> : page}</main>
+    </Ctx.Provider>
   );
 }
 
-function PlanSvg({ geom }: { geom: Geometry }) {
-  const xs = geom.outline.map((p) => p[0]);
-  const ys = geom.outline.map((p) => p[1]);
-  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const pad = 1;
-  const pts = (poly: [number, number][]) => poly.map(([x, y]) => `${x},${-y}`).join(" ");
-  return (
-    <svg
-      viewBox={`${minX - pad} ${-maxY - pad} ${maxX - minX + 2 * pad} ${maxY - minY + 2 * pad}`}
-      style={{ width: "100%", border: "1px solid #ccc", background: "#fff" }}
-    >
-      <polygon points={pts(geom.outline)} fill="#eef" stroke="#224" strokeWidth={0.08} />
-      {geom.candidates.map((c) => (
-        <g key={c.id}>
-          <polygon points={pts(c.polygon)} fill="rgba(255,140,0,0.25)" stroke="#c60" strokeWidth={0.05} />
-          <text x={c.polygon[0][0] + 0.1} y={-c.polygon[0][1] - 0.1} fontSize={0.4}>
-            {c.id}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
+function ServiceNotice({ me }: { me: Me }) {
+  const missing = [];
+  if (me.services.database === "sqlite") missing.push("local database");
+  if (me.services.vision_model !== "muse") missing.push("hazard detection from drawing labels (vision model not connected)");
+  if (missing.length === 0) return null;
+  return <div className="notice">Running with: {missing.join(" · ")}</div>;
 }

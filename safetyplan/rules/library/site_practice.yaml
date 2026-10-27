@@ -1,0 +1,45 @@
+# Good site practice that has no single code clause behind the quantity.
+# The *need* is backed by the cited rule; the *quantity formula* is PlanSafe's
+# estimate and is labelled as such in the report.
+
+pack: site_practice
+title: Site practice (PlanSafe estimates)
+version: 1
+rules:
+  - id: PRAC-LIFELINE
+    title: Horizontal lifeline while edge protection is installed
+    group: lifeline
+    applies_to: [project]
+    when: exposed_edge_length > 0 and floor_height >= 1.8
+    citation: 29 CFR 1926.502(d)(8); quantity is a PlanSafe estimate
+    summary: >-
+      Lifeline along the open perimeter of the active floor so workers installing guardrails
+      can tie off; anchor stanchions about every 10 m.
+    produces:
+      - {item: lifeline_m, qty: exposed_edge_length}
+      - {item: anchor_point, qty: ceil(exposed_edge_length / 10) + 1}
+    verified: false
+
+  - id: PRAC-SIGNAGE
+    title: Warning signs at edges and openings
+    group: signage
+    applies_to: [project]
+    when: exposed_edge_length > 0 or opening_count > 0
+    citation: 29 CFR 1926.200; quantity is a PlanSafe estimate
+    summary: One sign per 10 m of open edge and one per opening, on every active floor.
+    produces:
+      - {item: danger_sign, qty: (ceil(exposed_edge_length / 10) + opening_count) * active_floors}
+    verified: false
+
+  - id: PRAC-PPE-BASIC
+    title: Safety shoes, vests and gloves for every worker
+    group: ppe_basic
+    applies_to: [project]
+    when: workforce > 0
+    citation: 29 CFR 1926.95; IS 15298 (safety footwear); quantity is a PlanSafe estimate
+    summary: Foot protection, high-visibility vests and work gloves issued to every worker, plus spares.
+    produces:
+      - {item: safety_shoes, qty: ceil(workforce * (1 + spare))}
+      - {item: reflective_vest, qty: ceil(workforce * (1 + spare))}
+      - {item: gloves_pair, qty: ceil(workforce * (1 + spare))}
+    verified: false

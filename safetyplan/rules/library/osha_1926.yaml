@@ -1,0 +1,147 @@
+# OSHA 29 CFR Part 1926 (Construction), Subparts M (fall protection) and X (stairways).
+#
+# Variables available to `when` / `qty` (see safetyplan/rules/engine.py):
+#   feature:  length, perimeter, area, min_dim, max_dim
+#   project:  floors, floor_height, top_height, active_floors, workforce,
+#             workers_at_height, spare, exposed_edge_length, opening_count,
+#             max_cover_span, post_spacing
+# `group` joins rules from different packs that require the same thing; when
+# several packs are selected the larger quantity governs (stricter wins).
+
+pack: osha_1926
+title: OSHA 29 CFR 1926 - Construction
+version: 1
+rules:
+  - id: OSHA-EDGE-GUARDRAIL
+    title: Guardrail along unprotected slab edges
+    group: edge_guardrail
+    applies_to: [slab_edge, balcony]
+    when: floor_height >= 1.8
+    citation: 29 CFR 1926.501(b)(1); 1926.502(b)(1)-(3), (j)
+    summary: >-
+      Unprotected sides and edges 6 ft (1.8 m) or more above a lower level need a guardrail
+      system: top rail 39-45 in (0.99-1.14 m), mid rail, and toe boards where objects could fall.
+    produces:
+      - {item: guardrail_top_rail_m, qty: length * active_floors}
+      - {item: guardrail_mid_rail_m, qty: length * active_floors}
+      - {item: toe_board_m, qty: length * active_floors}
+      - {item: guardrail_post, qty: (ceil(length / post_spacing) + 1) * active_floors}
+    verified: true
+
+  - id: OSHA-HOLE-COVER-SMALL
+    title: Cover for small floor holes
+    group: hole_cover
+    applies_to: [duct_shaft, floor_opening]
+    when: max_dim + 0.3 <= 1.0
+    citation: 29 CFR 1926.501(b)(4); 1926.502(i)
+    summary: >-
+      Holes must be covered (or guarded). Covers must support twice the expected load, be
+      secured against displacement and be marked "HOLE" or "COVER". Sized with 150 mm bearing
+      on each side.
+    produces:
+      - {item: hole_cover_1m, qty: floors}
+    verified: true
+
+  - id: OSHA-HOLE-COVER-MEDIUM
+    title: Cover for medium floor holes
+    group: hole_cover
+    applies_to: [duct_shaft, floor_opening]
+    when: max_dim + 0.3 > 1.0 and max_dim + 0.3 <= max_cover_span
+    citation: 29 CFR 1926.501(b)(4); 1926.502(i)
+    summary: Same as small holes; cover plate up to 1.5 x 1.5 m.
+    produces:
+      - {item: hole_cover_1_5m, qty: floors}
+    verified: true
+
+  - id: OSHA-OPENING-GUARDRAIL
+    title: Guardrail around openings too large to cover
+    group: opening_guardrail
+    applies_to: [duct_shaft, floor_opening]
+    when: max_dim + 0.3 > max_cover_span and floor_height >= 1.8
+    citation: 29 CFR 1926.501(b)(4)(i); 1926.502(b)
+    summary: Holes 6 ft or more above a lower level that cannot practically be covered get a guardrail on all sides.
+    produces:
+      - {item: guardrail_top_rail_m, qty: perimeter * active_floors}
+      - {item: guardrail_mid_rail_m, qty: perimeter * active_floors}
+      - {item: toe_board_m, qty: perimeter * active_floors}
+      - {item: guardrail_post, qty: (ceil(perimeter / post_spacing) + 1) * active_floors}
+    verified: true
+
+  - id: OSHA-LIFT-SHAFT-GUARDRAIL
+    title: Guardrail around open lift shafts
+    group: lift_guardrail
+    applies_to: [lift_shaft]
+    when: floor_height >= 1.8
+    citation: 29 CFR 1926.501(b)(4)(i); 1926.502(b)
+    summary: Open lift shafts are holes; guard all sides until shaft walls are built.
+    produces:
+      - {item: guardrail_top_rail_m, qty: perimeter * active_floors}
+      - {item: guardrail_mid_rail_m, qty: perimeter * active_floors}
+      - {item: toe_board_m, qty: perimeter * active_floors}
+      - {item: guardrail_post, qty: (ceil(perimeter / post_spacing) + 1) * active_floors}
+    verified: true
+
+  - id: OSHA-LIFT-LANDING-BARRIER
+    title: Barrier at each lift landing opening
+    group: lift_landing
+    applies_to: [lift_shaft]
+    when: floors >= 1
+    citation: 29 CFR 1926.501(b)(14); 1926.502(b)
+    summary: >-
+      Once shaft walls are up, each landing door opening is a wall opening with a drop of more
+      than 6 ft and needs a barrier until lift doors are installed. One per landing.
+    produces:
+      - {item: lift_landing_barrier, qty: floors}
+    verified: true
+
+  - id: OSHA-STAIR-OPENING-GUARDRAIL
+    title: Guardrail around stair openings
+    group: stair_guardrail
+    applies_to: [stair]
+    when: floor_height >= 1.8
+    citation: 29 CFR 1926.501(b)(4); 1926.502(b)
+    summary: Guard the open sides of the stair opening in each slab, leaving the access side open.
+    produces:
+      - {item: guardrail_top_rail_m, qty: (perimeter - min_dim) * active_floors}
+      - {item: guardrail_mid_rail_m, qty: (perimeter - min_dim) * active_floors}
+      - {item: toe_board_m, qty: (perimeter - min_dim) * active_floors}
+      - {item: guardrail_post, qty: (ceil((perimeter - min_dim) / post_spacing) + 1) * active_floors}
+    verified: true
+
+  - id: OSHA-STAIR-HANDRAIL
+    title: Handrails on stair flights
+    group: stair_handrail
+    applies_to: [stair]
+    when: floor_height > 0.76
+    citation: 29 CFR 1926.1052(c)(1)
+    summary: >-
+      Stairways with 4 or more risers or rising more than 30 in (76 cm) need a handrail and a
+      stair rail on each unprotected side. Assumes a dog-leg stair: two flights per floor.
+    produces:
+      - {item: stair_handrail_m, qty: 2 * max_dim * floors}
+    verified: true
+
+  - id: OSHA-PFAS
+    title: Personal fall arrest for workers at height
+    group: pfas
+    applies_to: [project]
+    when: workers_at_height > 0 and floor_height >= 1.8
+    citation: 29 CFR 1926.502(d)
+    summary: >-
+      Workers exposed to falls where guardrails are not yet in place (installing edge protection,
+      formwork, facade work) use a full body harness with a shock-absorbing lanyard.
+    produces:
+      - {item: full_body_harness, qty: ceil(workers_at_height * (1 + spare))}
+      - {item: lanyard_double, qty: ceil(workers_at_height * (1 + spare))}
+    verified: true
+
+  - id: OSHA-HELMET
+    title: Head protection for every worker
+    group: helmet
+    applies_to: [project]
+    when: workforce > 0
+    citation: 29 CFR 1926.100(a)
+    summary: Employees working where there is a possible danger of head injury wear protective helmets.
+    produces:
+      - {item: helmet, qty: ceil(workforce * (1 + spare))}
+    verified: true

@@ -1,0 +1,14 @@
+Product Code,Description,Make,Category,Qty per pack,Rate (Rs),Standard,Stock
+B-POST,Guard rail stanchion,SiteGuard,Guardrail post,1,590,,yes
+B-RAIL3,Guard rail pipe 3 m,SiteGuard,Top rail,3,250,,yes
+B-MRAIL3,Mid rail pipe 3 m,SiteGuard,Mid rail,3,230,,yes
+B-TOE,Toe board 2 m (ply),SiteGuard,Toe board,2,210,,yes
+B-COV1,Opening cover 1 m,SiteGuard,Cover 1m,1,1300,,yes
+B-COV15,Opening cover 1.5 m,SiteGuard,Cover 1.5m,1,2450,,no
+B-HAR,Full body harness,SafeCrest,Harness,1,1590,IS 3521,yes
+B-LAN,Double lanyard,SafeCrest,Lanyard,1,1190,IS 3521,yes
+B-HEL20,Helmet box of 20,SafeCrest,Helmet,20,4100,IS 2925,yes
+B-SHOE,Safety shoe,SafeCrest,Shoes,1,820,IS 15298,yes
+B-VEST,Reflective jacket,SiteGuard,Vest,1,85,,yes
+B-GLOVE,Cotton gloves pair,SiteGuard,Gloves,1,40,,yes
+B-SIGN,Caution board,SiteGuard,Sign,1,150,,yes

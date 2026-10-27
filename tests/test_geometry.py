@@ -114,3 +114,39 @@ class TestFlatGeometry:
     def test_serialises(self, flat):
         d = flat.to_dict()
         assert d["candidates"] and d["edges"]
+
+
+class TestLooseLineDetail:
+    """Shafts and stairs drawn with loose LINEs must not shatter into fragments."""
+
+    @pytest.fixture(scope="class")
+    def geom(self, fixtures):
+        return build_geometry(load_dxf(fixtures["lines_only.dxf"]))
+
+    def test_two_candidates_only(self, geom):
+        assert len(geom.candidates) == 2
+
+    def test_x_cross_triangles_merge_into_shaft(self, geom):
+        shaft = next(c for c in geom.candidates if c.max_dim < 3)
+        assert shaft.area == pytest.approx(5.76) and (shaft.min_dim, shaft.max_dim) == pytest.approx((2.4, 2.4))
+
+    def test_tread_strips_merge_into_stair(self, geom):
+        stair = next(c for c in geom.candidates if c.max_dim > 4)
+        assert stair.area == pytest.approx(11.7) and (stair.min_dim, stair.max_dim) == pytest.approx((2.6, 4.5))
+
+    def test_two_triangles_are_not_merged(self):
+        from safetyplan.geometry.build import _merge_detail_faces
+        from shapely.geometry import Polygon
+
+        a = Polygon([(0, 0), (1, 0), (0.5, 0.5)])
+        b = Polygon([(1, 0), (1, 1), (0.5, 0.5)])
+        assert len(_merge_detail_faces([a, b])) == 2
+
+
+def test_edge_ids_start_bottom_left_and_go_anticlockwise(fixtures):
+    geom = build_geometry(load_dxf(fixtures["tower_mm.dxf"]))
+    assert geom.edges[0].p1 == (0.0, 0.0)
+    assert [(e.id, e.length, e.facing) for e in geom.edges] == [
+        ("E1", 8.0, "south"), ("E2", 1.2, "west"), ("E3", 4.0, "south"), ("E4", 1.2, "east"),
+        ("E5", 8.0, "south"), ("E6", 15.0, "east"), ("E7", 20.0, "north"), ("E8", 15.0, "west"),
+    ]

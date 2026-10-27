@@ -1,12 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd web && npm install && npm run build",
+  "installCommand": "npm install && npm --prefix web install",
+  "buildCommand": "npm --prefix web run build",
   "outputDirectory": "web/dist",
   "functions": {
     "api/index.py": {
       "maxDuration": 300,
       "includeFiles": "safetyplan/**"
+    },
+    "api/blob-upload.js": {
+      "maxDuration": 30
     }
   },
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }]
+  "rewrites": [{ "source": "/api/((?!blob-upload).*)", "destination": "/api/index" }]
 }
